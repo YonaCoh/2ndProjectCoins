@@ -8,17 +8,9 @@ class CoinData {
         };
     }
 }
-function handleNavbar() {
-    isBtnOpened = !isBtnOpened;
-    if(isBtnOpened){
-        $('#allPage').css('padding-top','150px');
-        return;
-    }
-    $('#allPage').css({ 'padding-top' : '35px' });
-}
 
 $(document).ready(() => {
-    
+
     $("#navBarBtn").click(handleNavbar);
     $("#searchBar").keydown(handleSearch);
     $('#liveReportsTab').click(handleReports);
@@ -26,6 +18,7 @@ $(document).ready(() => {
     $("#homeTag").click(handleHome);
     $("#navbar-brand-id").click(handleHome);
     $("#homeTag").click();
+
 });
 
 let isBtnOpened = false;
@@ -39,19 +32,31 @@ let isModalOpen = false;
 let isMoreInfo = false;
 
 
-// window.onload = function() {
-// }
+// Small screens arrgangements
+function handleNavbar() {
+
+    isBtnOpened = !isBtnOpened;
+
+    if (isBtnOpened) {
+        $('#allPage').css('padding-top', '150px')
+        return
+    }
+    $('#allPage').css({ 'padding-top': '35px' })
+    $('#allPage').css({ 'padding-top': '35px' });
+}
+
 
 function handleHome() {
+
     tabIsPressed();
-    if(!globalData) {
+    if (!globalData) {
         handleProgBar();
-        getAllData(function(data) {
+        getAllData(function (data) {
             globalData = data;
             data = data.filter(word => word.name.length < 8 && word.name.length > 3);
-            finishProgBar(()=> createTemplate(data));
+            finishProgBar(() => createTemplate(data));
         });
-        $("#home").show();    
+        $("#home").show();
         return;
     }
     globalData = globalData.filter(word => word.name.length < 8 && word.name.length > 3);
@@ -60,55 +65,44 @@ function handleHome() {
     // $(arrChecked).bootstrapToggle("on");
 }
 
+
+
 //Get data from APIs
 //------------------------------------
 
 // Get all coins data
-function getAllData(cb) {
-    let xhr = new XMLHttpRequest();
-    let url = "https://api.coingecko.com/api/v3/coins/list";
-
-    xhr.addEventListener("load", function() {
-        cb(this.response);
-    });
-    xhr.open("GET", url);
-    xhr.responseType = "json";
-    xhr.send();
+async function getAllData(cb) {
+    const response = await fetch(`https://api.coingecko.com/api/v3/coins/list`)
+    const data = await response.json()
+    cb(data)
 };
+
+
 // Get specific coin data
-function getCoinData(coin, cb) {
+async function getCoinData(coin, cb) {
 
-    let xhr = new XMLHttpRequest();
-    let url = `https://api.coingecko.com/api/v3/coins/${coin}`
-
-    xhr.addEventListener("load", function() {
-        cb(this.response);
-    });
-
-    xhr.open("GET", url);
-    xhr.responseType = "json";
-    xhr.send();
+    const response = await fetch(`https://api.coingecko.com/api/v3/coins/${coin}`)
+    const data = await response.json()
+    cb(data);
 };
+
 // Get data of coins checked by the user
-function getReportData(symbols, cb) {
-    let xhr = new XMLHttpRequest();
-    let url = `https://min-api.cryptocompare.com/data/pricemulti?fsyms=${symbols}&tsyms=usd,eur,ils`;
+async function getReportData(symbols, cb) {
 
-    xhr.addEventListener("load", function() {
-        cb(this.response);
-    })
-
-    xhr.open('GET', url);
-    xhr.responseType= "json";
-    xhr.send();
+    const response = await fetch(`https://min-api.cryptocompare.com/data/pricemulti?fsyms=${symbols}&tsyms=usd,eur,ils`)
+    const data = await response.json()
+    cb(data);
 }
 
 
-// Gets all the data relevent and creates the chart. 
+
+
+
+// Gets all the relevent data and creates the chart. 
 function renderChart(coinsData) {
     let dataObjects = []
 
-    for(let coin in coinsData) {
+    for (let coin in coinsData) {
         dataObjects.push(
             {
                 type: "spline",
@@ -121,15 +115,15 @@ function renderChart(coinsData) {
         )
     }
 
-    let chart = new CanvasJS.Chart("chartContainer",{              
-        title:{
+    let chart = new CanvasJS.Chart("chartContainer", {
+        title: {
             text: "Virtual Coins Live Reports"
         },
-        axisX:{
+        axisX: {
             interval: 2,
             intervalType: "second",
         },
-        axisY:[{
+        axisY: [{
             title: "Linear Scale",
             lineColor: "#369EAD",
             titleFontColor: "#369EAD",
@@ -142,7 +136,7 @@ function renderChart(coinsData) {
             titleFontColor: "#C24642",
             labelFontColor: "#C24642"
         }],
-        axisY2:[{
+        axisY2: [{
             title: "Linear Scale",
             lineColor: "#7F6084",
             titleFontColor: "#7F6084",
@@ -162,8 +156,9 @@ function renderChart(coinsData) {
     chart.render();
 }
 
-function handleReports(){
-    if(arrChecked.length <= 0) {
+function handleReports() {
+
+    if (arrChecked.length <= 0) {
         alert("Please choose at least one coin");
         return;
     }
@@ -175,10 +170,10 @@ function handleReports(){
     let coinData = {};
     let arrValues = arrChecked.map(c => c.getAttribute('symbol'));
     let strIds = arrValues.join();
-    
-    intervalId = setInterval(function() {
-        getReportData(strIds, function(data) {
-            if(data["Response"] === "Error") {
+
+    intervalId = setInterval(function () {
+        getReportData(strIds, function (data) {
+            if (data["Response"] === "Error") {
                 finishProgBar(() => {
                     clearInterval(intervalId);
                     alert(data["Message"]);
@@ -187,20 +182,20 @@ function handleReports(){
                 })
                 return;
             }
-            for(let coin in data) {
-                if(!coinData[coin]) {
+            for (let coin in data) {
+                if (!coinData[coin]) {
                     coinData[coin] = [];
                 }
-                coinData[coin].push({x: new Date(), y: data[coin]["USD"]});
+                coinData[coin].push({ x: new Date(), y: data[coin]["USD"] });
             }
-            if(firstChart) {
-                finishProgBar(() => renderChart(coinData));  
+            if (firstChart) {
+                finishProgBar(() => renderChart(coinData));
                 firstChart = false;
             } else {
                 renderChart(coinData);
             }
         });
-    },2000)
+    }, 2000)
 }
 
 // More info button related function
@@ -209,39 +204,41 @@ function handleReports(){
 
 handleCoinInfo = (coinObj, coinId) => {
     let collapsedMoreInfo = $(`#${coinId}-text`);
-    
-        collapsedMoreInfo.append($('<div class="m-2"><img src="'+coinObj.imgUrl+'"</div>'));        
+
+    collapsedMoreInfo.append($(`<div class="m-2"><img src="${coinObj.imgUrl}"</div>`));
     let valuesElem = $("<ul></ul>");
 
-        for(key in coinObj.coins) {
-            valuesElem.append($(`<li>${key} - ${coinObj.coins[key]}</li>`))
-        }
-        collapsedMoreInfo.append(valuesElem);
+    for (key in coinObj.coins) {
+        valuesElem.append($(`<li>${key} - ${coinObj.coins[key]}</li>`))
+    }
+    collapsedMoreInfo.append(valuesElem);
 }
 // Check if more Info button is "open" + check if it was already clicked and do something respectively
 function handleMoreInfo(e) {
-    if(e.target.innerHTML == "Less Info") {
+    if (e.target.innerHTML == "Less Info") {
         e.target.innerHTML = "More Info";
         return
     }
 
     e.target.innerHTML = "Less Info";
-    // let coinId = e.target.id;
     let coinId = extractId(e.target.id);
-    if($(`#${coinId}-text`).children().length === 0){
-        getCoinData(coinId, function(data) {
+
+    if ($(`#${coinId}-text`).children().length === 0) { //- The collapsed HTML element. If it's the first time it is used - execute the function
+        getCoinData(coinId, function (data) { //data is the fulfilled element of the async function
+
             let curCoin = new CoinData(data);
             handleCoinInfo(curCoin, coinId);
             return;
         });
-    }    
+    }
 }
 
 function handleToggle(e) {
 
-    if($(this).prop('checked')) {
-        for(elm of arrChecked) {
-            if(e.target.id === elm.id) {
+    // In event handlers this === e.target (ES5)
+    if ($(this).prop('checked')) {
+        for (elm of arrChecked) {
+            if (e.target.id === elm.id) {
                 return;
             }
         }
@@ -249,7 +246,7 @@ function handleToggle(e) {
     } else {
         arrChecked.splice(arrChecked.indexOf(this), 1);
     }
-    if(arrChecked.length > 5 && $(this).prop('checked')) {
+    if (arrChecked.length > 5 && $(this).prop('checked')) {
         handleModal();
     }
 }
@@ -262,11 +259,12 @@ function extractId(htmlId) {
 
 
 function handleModal() {
+
     $('#modal').modal();
     $('#save-btn').click(handleSave);
     let checkedCoins = $('#checkedList h5');
     checkBoxes = $('#checkedList input');
-    for(i in arrChecked) {
+    for (i in arrChecked) {
         let coinId = extractId(arrChecked[i].id);
         checkedCoins[i].textContent = coinId;
         checkBoxes[i].id = coinId;
@@ -276,7 +274,7 @@ function handleModal() {
 }
 
 function handleCheckBox(e) {
-    if(e.target.checked) {
+    if (e.target.checked) {
         checkedInModal.push(this.id);
     } else {
         checkedInModal.splice(checkedInModal.indexOf(this.id), 1);
@@ -285,16 +283,16 @@ function handleCheckBox(e) {
 
 
 function handleSave() {
-    if(checkedInModal.length > 5) {
+    if (checkedInModal.length > 5) {
         alert("Please select up to 5 coins");
     } else {
-        for(checkBoxId of checkBoxes) {
+        for (checkBoxId of checkBoxes) {
             $(checkBoxId).off("click");
         }
         $('#save-btn').off("click");
         $('#modal').modal('hide');
         $(arrChecked).bootstrapToggle("off");
-        let checkedInModalElem = checkedInModal.map(coinId => $("#"+coinId+"_check")[0]);
+        let checkedInModalElem = checkedInModal.map(coinId => $("#" + coinId + "_check")[0]);
         $(checkedInModalElem).bootstrapToggle("on");
         arrChecked = [...checkedInModalElem];
         checkedInModal = [];
@@ -304,7 +302,7 @@ function handleSave() {
 
 
 function createTemplate(data) {
-    $('#rows').empty(); 
+    $('#rows').empty();
     let html = `
 <div class="col-lg-4 col-md-6 mb-4">
     <div class="card h-100">
@@ -323,16 +321,18 @@ function createTemplate(data) {
 </div>`;
     let newHtml;
 
-    for(i in data.slice(0, 100)) {
+    for (i in data.slice(0, 100)) {
         newHtml = html.replace(/%coinName%/g, data[i].name);
         newHtml = newHtml.replace(/%symbol%/g, data[i].symbol);
         newHtml = newHtml.replace(/%coinId%/g, data[i].id);
         $('#rows').append($(newHtml));
     }
-    $("[data-toggle=toggle]").bootstrapToggle();
+    $("[data-toggle=toggle]").bootstrapToggle(); //$("[]") - targets multiple elemenets bootstraptoggle() - intializles toggle button
     $('.moreInfo').click(handleMoreInfo);
     $('.toggles').change(handleToggle);
     $(".moreInfo").collapse();
+
+    //When back to home page, turns on the chosen buttons
     arrChecked.forEach(toggleBtn => $(`#${toggleBtn.id}.toggles`).bootstrapToggle("on"));
 }
 
@@ -350,17 +350,17 @@ function finishProgBar(cb) {
 
 // handle search, calls finishProgBar respectively
 function handleSearch(e) {
-    if(e.keyCode !== 13){
+    if (e.keyCode !== 13) {
         return;
     }
     let input = $('#searchBar').val().toLowerCase();
     let arrCoins = [];
-    for(coin of globalData) {
-        if(input === coin.symbol.toLowerCase() || input === coin.name.toLowerCase()) {
+    for (coin of globalData) {
+        if (input === coin.symbol.toLowerCase() || input === coin.name.toLowerCase()) {
             arrCoins.push(coin);
         }
     }
-    if(arrCoins.length === 0) {
+    if (arrCoins.length === 0) {
         alert(`"${input}" does not exist in the data base. Please check your spelling or try a different coin name.`);
         // $("#home").show();
         return;
@@ -375,7 +375,7 @@ function handleSearch(e) {
 function handleProgBar() {
     $('#progress').show();
     $('#progress .progress-bar').width('10%');
-    progInterval = setInterval(() => {$('#progress .progress-bar').width($('#progress .progress-bar').width() * 1.4)}, 100);
+    progInterval = setInterval(() => { $('#progress .progress-bar').width($('#progress .progress-bar').width() * 1.4) }, 100);
 };
 
 
@@ -400,7 +400,10 @@ function handleAbout() {
     $("#about").show();
 }
 
+
+// Clears the page for new tab to be showed
 function tabIsPressed() {
+
     $("#chartContainer").empty();
     clearInterval(intervalId);
     $("#home").hide();

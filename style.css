@@ -4,6 +4,7 @@
     top: 1px;
 }
 
+
 .input-group.md-form.form-sm.form-1 input{
   border: 1px solid #bdbdbd;
   border-top-right-radius: 0.25rem;
@@ -38,4 +39,11 @@
 
 .toggle {
   right: -77px;
+}
+
+.modal {
+  position: absolute;
+  margin: 0 auto;
+  left: 50%;
+  top:50%;
 }
